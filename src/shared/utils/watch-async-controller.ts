@@ -4,10 +4,10 @@ import Env from './env';
 
 export const WatchAsyncController = (fn: ExpressController) => (req: Request, res: Response) => {
   Promise.resolve(fn(req, res)).catch((error) => {
-      res.status(500).json({
+      res.status(error.code || 500).json({
           status: false,
           message: 'We encountered a problem while processing your request. Please try again',
-          errors: Env.get<string>('NODE_ENV') !== 'production' ? error.errors || error.message : null
+          errors: Env.get<string>('NODE_ENV') !== 'production' ? error.errors || error.stack : null
       });
   });
 };

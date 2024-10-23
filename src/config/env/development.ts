@@ -13,6 +13,8 @@ const development = {
   CRYPTO_OTP_LENGTH: process.env.TEMPLATE_CRYPTO_OTP_LENGTH,
   CRYPTO_HASH_ALGO: process.env.TEMPLATE_CRYPTO_HASH_ALGO,
   SALT_ROUND: process.env.TEMPLATE_SALT_ROUND,
+  PAYSTACK_KEY: process.env.TEMPLATE_PAYSTACK_KEY,
+  PAYSTACK_URL: process.env.TEMPLATE_PAYSTACK_URL
 };
 
 export default development;

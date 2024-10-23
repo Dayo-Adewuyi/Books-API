@@ -2,15 +2,16 @@ import { BaseEntity } from '../../shared/utils/base-entity';
 
 export class UserEntity extends BaseEntity<UserEntity> {
     id: string;
-    email: string;
+    username: string;
     password: string;
-    verified: boolean;
-    profile: Profile;
+    purchases: Purchases;
 }
 
-export type Profile = {
-    id?: string;
-    user_id?: string;
-    first_name: string;
-    last_name: string;
+export type Purchases = {
+    id?: string,
+    user_id: string,
+    book_id: string,
+    purchase_date?: string,
+    quantity?: number,
+    total_price?: number,
 }

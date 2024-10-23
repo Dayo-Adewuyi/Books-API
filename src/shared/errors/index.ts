@@ -47,5 +47,6 @@ export const handleCustomError = (res: Response, error: any, statusCode: number)
       status: 'error',
       statusCode: statusCode,
       message: error.message
+      
   });
 };

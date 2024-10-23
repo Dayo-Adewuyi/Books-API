@@ -1,119 +1,74 @@
 import { expect } from 'chai';
 import { StatusCodes } from 'http-status-codes';
 import { describe, it } from 'mocha';
-import request from 'supertest';
 import app from '../../../src/config/express';
+import { faker } from '@faker-js/faker';
+import { createTestClient, expectSuccess, expectUnauthorized } from '../test.utils';
 
-const baseUrl = '/api/v1/auth';
+const baseUrl = '/api/v1/user';
+const testClient = createTestClient(app, baseUrl);
 
-describe('Authentication', () => {
-    it('should successfully create user', (done) => {
-        const payload = {
-            email: 'john@template.com',
-            password: 'Password@1',
-            profile: {
-                first_name: 'John',
-                last_name: 'Doe',
-            }
-        };
+describe('User Authentication API', () => {
+    const testUser = {
+        username: "Jane Doe",
+        password: "what333i"
+    };
 
-        request(app)
-            .post(`${baseUrl}/register`)
-            .send(payload)
-            .end((_err, response) => {
-                expect(response.status).to.equal(StatusCodes.OK);
-                expect(response.body.status).to.equal('success');
-                expect(response.body.message).to.equal('User registered successfully');
-                done();
+    describe('Registration', () => {
+        it('should successfully register a new user', async () => {
+            const response = await testClient.post('/register', { 
+                body: testUser 
             });
+            expectSuccess(response, 'User registered successfully');
+        });
+
+        it('should prevent duplicate username registration', async () => {
+            const duplicateUser = {
+                username: testUser.username,
+                password: faker.internet.password()
+            };
+
+            const response = await testClient.post('/register', { 
+                body: duplicateUser 
+            });
+            expect(response.status).to.equal(StatusCodes.CONFLICT);
+            expect(response.body.status).to.equal('error');
+            expect(response.body.message).to.equal('User already exists');
+        });
     });
 
-    it('should not register user if email already exists', (done) => {
-        const payload = {
-            email: 'john@template.com',
-            password: 'Password@1',
-            profile: {
-                first_name: 'John',
-                last_name: 'Doe',
-            }
-        };
-
-        request(app)
-            .post(`${baseUrl}/register`)
-            .send(payload)
-            .end((_err, response) => {
-                expect(response.status).to.equal(StatusCodes.CONFLICT);
-                expect(response.body.status).to.equal('error');
-                expect(response.body.message).to.equal('User already exists');
-                done();
+    describe('Login', () => {
+        it('should successfully login with valid credentials', async () => {
+            const response = await testClient.post('/login', { 
+                body: testUser 
             });
-    });
+            expectSuccess(response, 'User logged in successfully');
+        });
 
-    it('should not login user if account is unverified', (done) => {
-        const payload = {
-            email: 'john@template.com',
-            password: 'Password@1'
-        };
+        it('should reject login with incorrect password', async () => {
+            const invalidCredentials = {
+                username: testUser.username,
+                password: faker.internet.password()
+            };
 
-        request(app)
-            .post(`${baseUrl}/login`)
-            .send(payload)
-            .end((_err, response) => {
-                expect(response.status).to.equal(StatusCodes.UNAUTHORIZED);
-                expect(response.body.status).to.equal('error');
-                expect(response.body.message).to.equal('Account unverified. Please verify your email');
-                done();
+            const response = await testClient.post('/login', { 
+                body: invalidCredentials 
             });
-    });
+            expectUnauthorized(response);
+            expect(response.body.message).to.equal('Incorrect username and password combination');
+        });
 
-    it('should not verify email if otp is wrong', (done) => {
-        const payload = {
-            email: 'john@template.com',
-            otp: 'wrong_otp',
-        };
+        it('should reject login with non-existent username', async () => {
+            const nonExistentUser = {
+                username: faker.internet.userName(),
+                password: testUser.password
+            };
 
-        request(app)
-            .post(`${baseUrl}/verify-otp`)
-            .send(payload)
-            .end((_err, response) => {
-                expect(response.status).to.equal(StatusCodes.UNAUTHORIZED);
-                expect(response.body.status).to.equal('error');
-                expect(response.body.message).to.equal('Invalid or expired OTP');
-                done();
+            const response = await testClient.post('/login', { 
+                body: nonExistentUser 
             });
+            expectUnauthorized(response);
+            expect(response.body.message).to.equal('Incorrect username and password combination');
+        });
     });
-
-    it('should verify email', (done) => {
-        const payload = {
-            email: 'john@template.com',
-            otp: process.env.OTP_OR_HASH
-        };
-
-        request(app)
-            .post(`${baseUrl}/verify-otp`)
-            .send(payload)
-            .end((_err, response) => {
-                expect(response.status).to.equal(StatusCodes.OK);
-                expect(response.body.status).to.equal('success');
-                expect(response.body.message).to.equal('Token verified successfully');
-                done();
-            });
-    });
-
-    it('should login user if account is verified', (done) => {
-        const payload = {
-            email: 'john@template.com',
-            password: 'Password@1'
-        };
-
-        request(app)
-            .post(`${baseUrl}/login`)
-            .send(payload)
-            .end((_err, response) => {
-                expect(response.status).to.equal(StatusCodes.OK);
-                expect(response.body.status).to.equal('success');
-                expect(response.body.message).to.equal('User logged in successfully');
-                done();
-            })
-    })
 });

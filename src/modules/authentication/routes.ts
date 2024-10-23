@@ -2,7 +2,7 @@ import { Router } from 'express';
 import authController from './controller';
 import * as validators from './validator';
 import { WatchAsyncController } from '../../shared/utils/watch-async-controller';
-import { RequestBodyValidatorMiddleware } from '../../shared/middlewares/request-body-validator.middleware';
+import { RequestBodyValidatorMiddleware } from '../../shared/middlewares/request-validator.middleware';
 
 const authRouter = Router();
 
@@ -12,11 +12,7 @@ authRouter.post(
   WatchAsyncController(authController.createUser),
 );
 
-authRouter.post(
-  '/verify-otp',
-  RequestBodyValidatorMiddleware(validators.otpSchema),
-  WatchAsyncController(authController.verifyOTP),
-)
+
 
 authRouter.post(
   '/login',

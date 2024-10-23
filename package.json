@@ -13,7 +13,8 @@
     "test": "cross-env TEMPLATE_NODE_ENV=test nyc --reporter=lcov --reporter=text --reporter=text-summary mocha --require ts-node/register --exit --recursive --timeout=150000 tests/index.ts",
     "prepare": "husky install",
     "migrations": "source .env && db-migrate",
-    "migrate:up": "db-migrate up  --config database.json",
+    "create:migration": "db-migrate create --config database.json",
+    "migrate:up": "db-migrate up  --config database.json ",
     "migrate:down": "db-migrate down  --config database.json",
     "migrate-test:up": "db-migrate up --config database.json -e test",
     "migrate-test:down": "db-migrate down -c 100 --config database.json -e test",
@@ -27,6 +28,7 @@
     "seed:up:test": "db-migrate up:seed --config database.json -e test"
   },
   "dependencies": {
+    "axios": "^1.7.7",
     "bcrypt": "^5.1.0",
     "bluebird": "^3.7.2",
     "chai-http": "^4.4.0",
@@ -45,6 +47,7 @@
     "jsonwebtoken": "^9.0.2",
     "mocha": "^10.2.0",
     "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
     "pg-promise": "^11.5.4",
     "sinon": "^15.2.0",
     "superagent": "^8.0.9",
@@ -54,6 +57,7 @@
     "winston-papertrail": "^1.0.5"
   },
   "devDependencies": {
+    "@faker-js/faker": "^9.0.3",
     "@types/bcrypt": "^5.0.0",
     "@types/bluebird": "^3.5.42",
     "@types/chai": "^4.3.5",
@@ -62,6 +66,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mocha": "^10.0.1",
     "@types/morgan": "^1.9.4",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.12.12",
     "@types/sinon": "^10.0.16",
     "@types/supertest": "^6.0.2",

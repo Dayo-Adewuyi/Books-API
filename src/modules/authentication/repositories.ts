@@ -3,22 +3,31 @@ import { db } from '../../config/database';
 import * as authParams from './entities';
 import authQueries from './query';
 
+/**
+ * The AuthRepository interface provides methods to interact with the database.
+ * It provides methods to create and retrieve user data.
+ * @interface AuthRepository
+ */
 export interface AuthRepository {
   createUser(params: authParams.UserEntity): Promise<void>;
   getUser(param: string): Promise<authParams.UserEntity | NotFoundException>;
-  verifyUser(email: string): Promise<void>;
 }
 
+/**
+ * The AuthRepositoryImpl class implements the AuthRepository interface.
+ * It provides methods to interact with the database.
+ * It provides methods to create and retrieve user data.
+ */
 export class AuthRepositoryImpl implements AuthRepository {
   public async createUser(params: authParams.UserEntity): Promise<void> {
+
     return db.tx(async (t) => {
+
       const createUser = await t.one(authQueries.createUser, params);
-      params.profile.user_id = createUser.id;
 
-      const createProfile = await t.none(authQueries.createProfile, params.profile);
-
-      await t.batch([createUser, createProfile]);
+      await t.batch([createUser]);
     });
+
 
   }
 
@@ -32,19 +41,11 @@ export class AuthRepositoryImpl implements AuthRepository {
 
     return new authParams.UserEntity({
       id: user.id,
-      email: user.email,
-      password: user.password,
-      verified: user.verified,
-      profile: {
-        first_name: user.first_name,
-        last_name: user.last_name
-      }
+      username: user.email,
+      password: user.password
     })
   }
 
-  public async verifyUser(email: string): Promise<void> {
-    await db.none(authQueries.verifyUser, [email]);
-  }
 
 }
 

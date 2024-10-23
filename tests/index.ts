@@ -6,4 +6,8 @@ import './unit/env';
 
 // Integration tests
 import './integration/authentication/auth_flow'
-import './integration/customers'
+import './integration/books'
+
+import './unit/middlewares/authMiddleware';
+import './unit/middlewares/imageMiddleware';
+import './unit/middlewares/requestValidator';
