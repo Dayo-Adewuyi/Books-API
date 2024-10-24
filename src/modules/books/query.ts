@@ -52,7 +52,7 @@ export default {
             summary = $(summary),
             cover_image = $(cover_image),
             updated_at = NOW()
-        WHERE book_id = $(bookId)
+        WHERE book_id = $(book_id)
         RETURNING book_id, title, authors, publisher, published, genre, summary, cover_image, updated_at;
     `,
 

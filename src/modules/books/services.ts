@@ -1,6 +1,6 @@
 import { BookEntity, PurchaseEntity } from './entities';
 import bookRepository, { BookRepository } from './repositories';
-import { BadException,  InternalServerErrorException,  NotFoundException } from '../../shared/errors';
+import { BadException,  InternalServerErrorException } from '../../shared/errors';
   import paymentService, { PaymentService,  InitializationResponse} from '../../shared/utils/payment';
 
   /**
@@ -38,6 +38,8 @@ export interface BookServices {
  * @param paymentService - Service responsible for handling payment logic.
  */
 export class BookServiceImpl implements BookServices {
+  private static readonly DEFAULT_LIMIT = 10;
+  private static readonly DEFAULT_OFFSET = 0;
   constructor(
     private readonly bookRepository: BookRepository,
     private readonly paymentService: PaymentService
@@ -53,31 +55,27 @@ export class BookServiceImpl implements BookServices {
     genre?: string;
     author?: string;
   } = {}): Promise<{ data: BookEntity[]; total: number }> {
+    const { 
+      limit = BookServiceImpl.DEFAULT_LIMIT, 
+      offset = BookServiceImpl.DEFAULT_OFFSET, 
+      genre, 
+      author 
+    } = options;
 
-    const { limit = 10, offset = 0, genre, author } = options;
-
-
-
+  
     const response = await this.bookRepository.fetchAllBooks();
-
-
     let filteredBooks = response;
-    if (genre) {
-      filteredBooks = filteredBooks.filter(book =>
-        book.genre.some(g => g.toLowerCase() === genre.toLowerCase())
-      );
-    }
-    if (author) {
-      filteredBooks = filteredBooks.filter(book =>
-        book.authors.some(a => a.toLowerCase().includes(author.toLowerCase()))
-      );
+
+    if (genre || author) {
+      filteredBooks = this.filterBooks(response, { genre, author });
     }
 
+    const total = filteredBooks.length;
     const paginatedBooks = filteredBooks.slice(offset, offset + limit);
 
     return {
       data: paginatedBooks,
-      total: filteredBooks.length
+      total
     };
   }
 
@@ -92,43 +90,41 @@ export class BookServiceImpl implements BookServices {
 
   public async updateBook(bookId: string, params: Partial<BookEntity>): Promise<BookEntity> {
     const existingBook = await this.fetchBook(bookId);
-
-    const updateParams = {
-      bookId: bookId,
-      title: params.title ?? existingBook.title,
-      authors: params.authors ?? existingBook.authors,
-      publisher: params.publisher ?? existingBook.publisher,
-      published: params.published ?? existingBook.published,
-      genre: params.genre ?? existingBook.genre,
-      summary: params.summary ?? existingBook.summary,
-      cover_image: params.cover_image ?? existingBook.cover_image
-    };
-    const response = await this.bookRepository.updateBook(updateParams)
+    const updateParams = this.mergeBookParams(existingBook, params);
+    const response = await this.bookRepository.updateBook(updateParams);
     if (!response) {
-      throw new NotFoundException(`Failed to update book with id: ${bookId}`);
+      throw new InternalServerErrorException(`Failed to update book with id: ${bookId}`);
     }
+
     return response;
   }
 
   public async deleteBook(bookId: string): Promise<boolean> {
-    await this.fetchBook(bookId)
-    await this.bookRepository.deleteBook(bookId)
+    await this.fetchBook(bookId); 
+    await this.bookRepository.deleteBook(bookId);
     return true;
   }
 
   public async createPurchase( params: PurchaseEntity): Promise<InitializationResponse> {
-    const book = await this.bookRepository.fetchBook(params.book_id)
-    if(!book){
-      throw new NotFoundException("book not found")
-    }
-    const price = book.price * 100 * params.quantity
-    const initializePayment = await this.paymentService.initialize(params.user_id, price.toString())
-    params.payment_reference = initializePayment.reference
-    params.total_price = price
-    const purchase = await this.bookRepository.createPurchase(params)
+    const book = await this.fetchBook(params.book_id);
+    const price = this.calculateTotalPrice(book.price, params.quantity);
+    
+    const initializePayment = await this.paymentService.initialize(
+      params.user_id, 
+      price.toString()
+    );
+
+    const purchaseParams = {
+      ...params,
+      payment_reference: initializePayment.reference,
+      total_price: price
+    };
+
+    const purchase = await this.bookRepository.createPurchase(purchaseParams);
     if (!purchase) {
-      throw new InternalServerErrorException("creating purchase failed")
+      throw new InternalServerErrorException('Failed to create purchase');
     }
+
     return initializePayment;
   }
 
@@ -138,6 +134,30 @@ export class BookServiceImpl implements BookServices {
     return purchases
   }
 
+  private filterBooks(books: BookEntity[], filters: { genre?: string; author?: string }): BookEntity[] {
+    return books.filter(book => {
+      const genreMatch = !filters.genre || book.genre.some(g => 
+        g.toLowerCase() === filters.genre?.toLowerCase()
+      );
+      
+      const authorMatch = !filters.author || book.authors.some(a => 
+        a.toLowerCase().includes(filters.author?.toLowerCase() ?? '')
+      );
+
+      return genreMatch && authorMatch;
+    });
+  }
+  private mergeBookParams(existingBook: BookEntity, params: Partial<BookEntity>): BookEntity {
+    return {
+      ...existingBook,
+      ...params,
+      id: existingBook.id 
+    };
+  }
+
+  private calculateTotalPrice(basePrice: number, quantity: number): number {
+    return Math.round(basePrice * 100 * quantity);
+  }
 }
 
 const BookServices = new BookServiceImpl(bookRepository, paymentService);
