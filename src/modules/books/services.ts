@@ -19,6 +19,7 @@ export interface BookServices {
   }): Promise<{
     data: BookEntity[];
     total: number;
+    page: number; totalPages: number; 
   }>;
   fetchBook(bookId: string): Promise<BookEntity>;
   deleteBook(bookId: string): Promise<boolean>;
@@ -54,7 +55,7 @@ export class BookServiceImpl implements BookServices {
     offset?: number;
     genre?: string;
     author?: string;
-  } = {}): Promise<{ data: BookEntity[]; total: number }> {
+  } = {}): Promise<{ data: BookEntity[]; total: number; page: number; totalPages: number }> {
     const { 
       limit = BookServiceImpl.DEFAULT_LIMIT, 
       offset = BookServiceImpl.DEFAULT_OFFSET, 
@@ -62,7 +63,7 @@ export class BookServiceImpl implements BookServices {
       author 
     } = options;
 
-  
+  console.log(limit)
     const response = await this.bookRepository.fetchAllBooks();
     let filteredBooks = response;
 
@@ -71,11 +72,19 @@ export class BookServiceImpl implements BookServices {
     }
 
     const total = filteredBooks.length;
-    const paginatedBooks = filteredBooks.slice(offset, offset + limit);
+    const totalPages = Math.ceil(total / limit);
+    const currentPage = Math.floor(offset / limit) + 1;
+    
+  
+    const startIndex = Number(offset);
+    const endIndex = startIndex + Number(limit);
+    const paginatedBooks = filteredBooks.slice(startIndex, endIndex);
 
     return {
       data: paginatedBooks,
-      total
+      total,
+      totalPages,
+      page: currentPage
     };
   }
 
