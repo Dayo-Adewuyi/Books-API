@@ -1,6 +1,6 @@
 # Books RESTful API
 
-A RESTful API which allows to perform CRUD operations on `books` documents stored in a mongoDB database. It is secured with the use of JWT.
+A RESTful API which allows to perform CRUD operations on `books` documents stored in a POSTGRES database. It is secured with the use of JWT.
 
 [Getting Started](#getting-started)  
 [Installation](#installation)  
