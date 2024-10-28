@@ -52,12 +52,15 @@ export class BooksController {
   }
   
   public fetchAllBooks: fnRequest = async(req, res)=> {
-    const data = await this.bookServices.fetchAllBooks(req.query)
+    const {data,totalPages,total,page} = await this.bookServices.fetchAllBooks(req.query)
     res.status(StatusCodes.OK).json({
       status: 'success',
       statuscode: StatusCodes.OK,
       message: "Books Fetched Successfully",
-      data
+      data,
+      totalRecords: total,
+      totalPages,
+      page
     })
   }
 
@@ -84,12 +87,15 @@ export class BooksController {
   }
 
   public fetchUserPurchase: fnRequest = async(req,res)=>{
-    const data = await this.bookServices.fetchUserPurchases(req.params.userId)
+    const {data, totalPages, page, total} = await this.bookServices.fetchUserPurchases(req.params.userId)
     return res.status(StatusCodes.OK).json({
       status: 'success',
       statuscode:StatusCodes.OK,
       message:"Purchases Fetched Successfully",
-      data
+      data,
+      totalRecords: total,
+      totalPages,
+      page
     })
   }
 }

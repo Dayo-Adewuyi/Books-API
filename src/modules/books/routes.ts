@@ -61,7 +61,10 @@ bookRouter.post(
 
 bookRouter.get(
   '/transactions/:userId',
-  RequestParamsValidatorMiddleware(userIdSchema,[checkUserId]),
+  CombinedValidatorMiddleware({
+    params: userIdSchema,
+    query: bookQuerySchema
+    },{ params: [checkUserId],body: [] ,query: []}),
   WatchAsyncController(bookController.fetchUserPurchase)
 )
 

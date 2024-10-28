@@ -23,7 +23,12 @@ describe(`Fetch Book(s) Endpoint: ${baseURL}`, () => {
   it("should fetch all books when authorized", async () => {
     const response = await client.get('');
     expectSuccess(response, 'Books Fetched Successfully');
-    testBookId = response.body.data.data[0].book_id;
+    expect(response.body.data).to.be.an('array');
+    expect(response.body.data.length).to.be.greaterThan(0);
+    expect(response.body.totalRecords).to.be.greaterThan(0);
+    expect(response.body.totalPages).to.be.greaterThan(0);
+    expect(response.body.page).to.be.greaterThan(0);
+    testBookId = response.body.data[0].book_id;
   });
 
   it("should fetch a single book when the bookId is provided", async () => {

@@ -48,7 +48,7 @@ export class TestClient {
       throw new Error(`Fetching Book Id failed: ${response.body.message}`);
     }
 
-    this.bookId = response.body.data.data[0].book_id;
+    this.bookId = response.body.data[0].book_id;
     return this.bookId;
   }
 

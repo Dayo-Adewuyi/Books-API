@@ -24,7 +24,7 @@ export interface BookServices {
   fetchBook(bookId: string): Promise<BookEntity>;
   deleteBook(bookId: string): Promise<boolean>;
   updateBook(bookId: string, params: Partial<BookEntity>): Promise<BookEntity>;
-  fetchUserPurchases(userId: string): Promise<PurchaseEntity[]>;
+  fetchUserPurchases(userId: string): Promise<{ data: PurchaseEntity[]; total: number; page: number; totalPages: number }>;
   createPurchase( params: PurchaseEntity): Promise<InitializationResponse>;
 }
 
@@ -63,7 +63,6 @@ export class BookServiceImpl implements BookServices {
       author 
     } = options;
 
-  console.log(limit)
     const response = await this.bookRepository.fetchAllBooks();
     let filteredBooks = response;
 
@@ -137,10 +136,29 @@ export class BookServiceImpl implements BookServices {
     return initializePayment;
   }
 
-  public async fetchUserPurchases(userId: string): Promise<PurchaseEntity[]> {
-    
+  public async fetchUserPurchases(userId: string,options: {
+    limit?: number;
+    offset?: number;
+  } = {}): Promise<{ data: PurchaseEntity[]; total: number; page: number; totalPages: number }> {
+    const { 
+      limit = BookServiceImpl.DEFAULT_LIMIT, 
+      offset = BookServiceImpl.DEFAULT_OFFSET, 
+    } = options;
     const purchases = await this.bookRepository.fetchUserPurchases(userId)
-    return purchases
+    const total = purchases.length;
+    const totalPages = Math.ceil(total / limit);
+    const currentPage = Math.floor(offset / limit) + 1;
+    
+  
+    const startIndex = Number(offset);
+    const endIndex = startIndex + Number(limit);
+    const paginatedPurchases = purchases.slice(startIndex, endIndex);
+    return {
+      data: paginatedPurchases,
+      total,
+      totalPages,
+      page: currentPage
+    };
   }
 
   private filterBooks(books: BookEntity[], filters: { genre?: string; author?: string }): BookEntity[] {

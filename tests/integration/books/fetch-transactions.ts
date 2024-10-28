@@ -31,6 +31,10 @@ describe(`Fetch User Purchases Endpoint: ${baseURL}`, () => {
     expectSuccess(response, 'Purchases Fetched Successfully');
     expect(response.body.data).to.be.an('array');
     expect(response.body.data.length).to.be.greaterThan(0);
+    expect(response.body.totalRecords).to.be.greaterThan(0);
+    expect(response.body.totalPages).to.be.greaterThan(0);
+    expect(response.body.page).to.be.greaterThan(0);
+
   });
 
  
